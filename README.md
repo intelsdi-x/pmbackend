@@ -22,5 +22,7 @@ PMBackend is small helper library providing key-value-like interface for accessi
 ## Building the sourcee
 
 mkdir build && cd build
+
 cmake ..
+
 make
