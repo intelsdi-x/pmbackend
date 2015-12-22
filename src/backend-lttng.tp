@@ -1,0 +1,149 @@
+#include "kv.h"
+
+TRACEPOINT_EVENT(backend, backend_tx_direct_enter,
+    TP_ARGS(void),
+    TP_FIELDS(
+
+    )
+)
+
+TRACEPOINT_EVENT(backend, backend_tx_direct_exit,
+    TP_ARGS(void),
+    TP_FIELDS(
+
+    )
+)
+
+TRACEPOINT_EVENT(backend, backend_direct_enter,
+    TP_ARGS(void),
+    TP_FIELDS(
+
+    )
+)
+
+TRACEPOINT_EVENT(backend, backend_direct_exit,
+    TP_ARGS(void),
+    TP_FIELDS(
+
+    )
+)
+
+TRACEPOINT_EVENT(backend, backend_persist_enter,
+    TP_ARGS(void*, obj_ptr,
+	    size_t, size),
+    TP_FIELDS(
+        ctf_integer(size_t, size, size)
+	ctf_integer_hex(uint64_t, obj_ptr, (uint64_t)obj_ptr)
+    )
+)
+
+TRACEPOINT_EVENT(backend, backend_persist_exit,
+    TP_ARGS(void*, obj_ptr,
+	    size_t, size),
+    TP_FIELDS(
+        ctf_integer(size_t, size, size)
+	ctf_integer_hex(uint64_t, obj_ptr, (uint64_t)obj_ptr)
+    )
+)
+
+TRACEPOINT_EVENT(backend, backend_tx_persist_enter,
+    TP_ARGS(uint64_t, tx_id,
+	    size_t, size),
+    TP_FIELDS(
+        ctf_integer(size_t, size, size)
+	ctf_integer_hex(uint64_t, tx_id, tx_id)
+    )
+)
+
+TRACEPOINT_EVENT(backend, backend_tx_persist_exit,
+    TP_ARGS(uint64_t, tx_id,
+	    size_t, size),
+    TP_FIELDS(
+        ctf_integer(size_t, size, size)
+	ctf_integer_hex(uint64_t, tx_id, tx_id)
+    )
+)
+
+TRACEPOINT_EVENT(backend, backend_get_enter,
+    TP_ARGS(void),
+    TP_FIELDS(
+
+    )
+)
+
+TRACEPOINT_EVENT(backend, backend_get_exit,
+    TP_ARGS(void),
+    TP_FIELDS(
+
+    )
+)
+
+TRACEPOINT_EVENT(backend, backend_set_zero_enter,
+    TP_ARGS(void),
+    TP_FIELDS(
+
+    )
+)
+
+TRACEPOINT_EVENT(backend, backend_set_zero_exit,
+    TP_ARGS(void),
+    TP_FIELDS(
+
+    )
+)
+
+TRACEPOINT_EVENT(backend, memset_enter,
+    TP_ARGS(void),
+    TP_FIELDS(
+
+    )
+)
+
+TRACEPOINT_EVENT(backend, memset_exit,
+    TP_ARGS(void),
+    TP_FIELDS(
+
+    )
+)
+
+TRACEPOINT_EVENT(backend, weak_persist_enter,
+    TP_ARGS(void),
+    TP_FIELDS(
+
+    )
+)
+
+TRACEPOINT_EVENT(backend, weak_persist_exit,
+    TP_ARGS(void),
+    TP_FIELDS(
+
+    )
+)
+
+TRACEPOINT_EVENT(backend, persist_enter,
+    TP_ARGS(void),
+    TP_FIELDS(
+
+    )
+)
+
+TRACEPOINT_EVENT(backend, persist_exit,
+    TP_ARGS(void),
+    TP_FIELDS(
+
+    )
+)
+
+TRACEPOINT_EVENT(backend, backend_tx_set_zero_enter,
+    TP_ARGS(void),
+    TP_FIELDS(
+
+    )
+)
+
+TRACEPOINT_EVENT(backend, backend_tx_set_zero_exit,
+    TP_ARGS(void),
+    TP_FIELDS(
+
+    )
+)

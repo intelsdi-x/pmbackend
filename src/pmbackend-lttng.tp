@@ -1,0 +1,322 @@
+#include "./kv.h"
+#include "../include/pmbackend.h"
+
+TRACEPOINT_EVENT(pmbackend, pmb_open_enter,
+    TP_ARGS(PMEMkvopts*, opts),
+    TP_FIELDS(
+
+	ctf_integer(uint64_t, handle_size, opts->handle_size)
+    )
+)
+
+TRACEPOINT_EVENT(pmbackend, pmb_open_exit,
+    TP_ARGS(const char*, err),
+    TP_FIELDS(
+        ctf_string(err, err)
+    )
+)
+
+TRACEPOINT_EVENT(pmbackend, pmb_close_enter,
+    TP_ARGS(void),
+    TP_FIELDS()
+)
+TRACEPOINT_EVENT(pmbackend, pmb_close_exit,
+    TP_ARGS(const char*, err),
+    TP_FIELDS(
+        ctf_string(err, err)
+    )
+)
+
+
+TRACEPOINT_EVENT(pmbackend, pmb_tx_begin_enter,
+    TP_ARGS(pmb_handle*, handle),
+    TP_FIELDS(
+        ctf_integer_hex(uint64_t, handle, handle)
+    )
+)
+
+TRACEPOINT_EVENT(pmbackend, pmb_tx_begin_exit,
+    TP_ARGS(pmb_handle*, handle, uint64_t, tx_slot, const char*, err),
+    TP_FIELDS(
+        ctf_integer_hex(uint64_t, handle, (uint64_t)handle)
+	ctf_integer_hex(uint64_t, tx_slot, tx_slot)
+	ctf_string(err, err)
+    )
+)
+
+TRACEPOINT_EVENT(pmbackend, pmb_tx_commit_enter,
+    TP_ARGS(pmb_handle*, handle, uint64_t, tx_slot),
+    TP_FIELDS(
+        ctf_integer_hex(uint64_t, handle, (uint64_t)handle)
+	ctf_integer_hex(uint64_t, tx_slot, tx_slot)
+    )
+)
+TRACEPOINT_EVENT(pmbackend, pmb_tx_commit_exit,
+    TP_ARGS(pmb_handle*, handle, uint64_t, tx_slot, uint8_t, err),
+    TP_FIELDS(
+        ctf_integer_hex(uint64_t, handle, (uint64_t)handle)
+	ctf_integer_hex(uint64_t, tx_slot, tx_slot)
+	ctf_integer(uint8_t, err, err)
+    )
+)
+
+TRACEPOINT_EVENT(pmbackend, pmb_tx_execute_enter,
+    TP_ARGS(pmb_handle*, handle, uint64_t, tx_slot),
+    TP_FIELDS(
+        ctf_integer_hex(uint64_t, handle, (uint64_t)handle)
+	ctf_integer_hex(uint64_t, tx_slot, tx_slot)
+    )
+)
+
+TRACEPOINT_EVENT(pmbackend, pmb_tx_execute_exit,
+    TP_ARGS(pmb_handle*, handle, uint64_t, tx_slot, uint8_t, err),
+    TP_FIELDS(
+        ctf_integer_hex(uint64_t, handle, (uint64_t)handle)
+	ctf_integer_hex(uint64_t, tx_slot, tx_slot)
+	ctf_integer(uint8_t, err, err)
+    )
+)
+
+TRACEPOINT_EVENT(pmbackend, pmb_tx_abort_enter,
+    TP_ARGS(pmb_handle*, handle, uint64_t, tx_slot),
+    TP_FIELDS(
+        ctf_integer_hex(uint64_t, handle, (uint64_t)handle)
+	ctf_integer_hex(uint64_t, tx_slot, tx_slot)
+    )
+)
+
+TRACEPOINT_EVENT(pmbackend, pmb_tx_abort_exit,
+    TP_ARGS(pmb_handle*, handle, uint64_t, tx_slot, uint8_t, err),
+    TP_FIELDS(
+        ctf_integer_hex(uint64_t, handle, (uint64_t)handle)
+	ctf_integer_hex(uint64_t, tx_slot, tx_slot)
+	ctf_integer(uint8_t, err, err)
+    )
+)
+
+TRACEPOINT_EVENT(pmbackend, pmb_get_enter,
+    TP_ARGS(pmb_handle*, handle, uint64_t, obj_id),
+    TP_FIELDS(
+        ctf_integer_hex(uint64_t, handle, (uint64_t)handle)
+	ctf_integer_hex(uint64_t, obj_id, obj_id)
+    )
+)
+
+TRACEPOINT_EVENT(pmbackend, pmb_get_exit,
+    TP_ARGS(pmb_handle*, handle, uint64_t, obj_id, uint8_t, err),
+    TP_FIELDS(
+        ctf_integer_hex(uint64_t, handle, (uint64_t)handle)
+	ctf_integer_hex(uint64_t, obj_id, obj_id)
+	ctf_integer(uint8_t, err, err)
+    )
+)
+
+TRACEPOINT_EVENT(pmbackend, pmb_put_enter,
+    TP_ARGS(pmb_handle*, handle, pmb_pair*, kv),
+    TP_FIELDS(
+        ctf_integer_hex(uint64_t, handle, (uint64_t)handle)
+	ctf_integer_hex(uint64_t, obj_id, kv->obj_id)
+	ctf_integer_hex(uint32_t, key_len, kv->key_len)
+	ctf_integer_hex(uint64_t, val_len, kv->val_len)
+    )
+)
+
+TRACEPOINT_EVENT(pmbackend, pmb_put_exit,
+    TP_ARGS(pmb_handle*, handle, pmb_pair*, kv),
+    TP_FIELDS(
+        ctf_integer_hex(uint64_t, handle, (uint64_t)handle)
+	ctf_integer_hex(uint64_t, obj_id, kv->obj_id)
+	ctf_integer_hex(uint32_t, key_len, kv->key_len)
+	ctf_integer_hex(uint64_t, val_len, kv->val_len)
+    )
+)
+
+TRACEPOINT_EVENT(pmbackend, pmb_tput_enter,
+    TP_ARGS(pmb_handle*, handle, pmb_pair*, kv, uint64_t, tx_slot),
+    TP_FIELDS(
+        ctf_integer_hex(uint64_t, handle, (uint64_t)handle)
+	ctf_integer_hex(uint64_t, tx_slot, tx_slot)
+	ctf_integer_hex(uint64_t, obj_id, kv->obj_id)
+	ctf_integer_hex(uint32_t, key_len, kv->key_len)
+	ctf_integer_hex(uint64_t, val_len, kv->val_len)
+    )
+)
+
+TRACEPOINT_EVENT(pmbackend, pmb_tput_exit,
+    TP_ARGS(pmb_handle*, handle, pmb_pair*, kv, uint64_t, tx_slot, uint32_t, line),
+    TP_FIELDS(
+        ctf_integer_hex(uint64_t, handle, (uint64_t)handle)
+	ctf_integer_hex(uint64_t, tx_slot, tx_slot)
+	ctf_integer_hex(uint64_t, obj_id, kv->obj_id)
+	ctf_integer_hex(uint32_t, key_len, kv->key_len)
+	ctf_integer_hex(uint64_t, val_len, kv->val_len)
+	ctf_integer(uint32_t, line, line)
+    )
+)
+
+TRACEPOINT_EVENT(pmbackend, pmb_del_enter,
+    TP_ARGS(pmb_handle*, handle, uint64_t, obj_id),
+    TP_FIELDS(
+        ctf_integer_hex(uint64_t, handle, (uint64_t)handle)
+	ctf_integer_hex(uint64_t, obj_id, obj_id)
+    )
+)
+
+TRACEPOINT_EVENT(pmbackend, pmb_del_exit,
+    TP_ARGS(pmb_handle*, handle, uint64_t, obj_id, uint32_t, line),
+    TP_FIELDS(
+        ctf_integer_hex(uint64_t, handle, (uint64_t)handle)
+	ctf_integer_hex(uint64_t, obj_id, obj_id)
+	ctf_integer(uint32_t, line, line)
+    )
+)
+
+TRACEPOINT_EVENT(pmbackend, pmb_tdel_enter,
+    TP_ARGS(pmb_handle*, handle, uint64_t, obj_id, uint64_t, tx_slot),
+    TP_FIELDS(
+        ctf_integer_hex(uint64_t, handle, (uint64_t)handle)
+	ctf_integer_hex(uint64_t, obj_id, obj_id)
+	ctf_integer_hex(uint64_t, tx_slot, tx_slot)
+    )
+)
+
+TRACEPOINT_EVENT(pmbackend, pmb_tdel_exit,
+    TP_ARGS(pmb_handle*, handle, uint64_t, obj_id, uint64_t, tx_slot, uint8_t, ret),
+    TP_FIELDS(
+        ctf_integer_hex(uint64_t, handle, (uint64_t)handle)
+	ctf_integer_hex(uint64_t, obj_id, obj_id)
+	ctf_integer_hex(uint64_t, tx_slot, tx_slot)
+	ctf_integer(uint8_t, ret, ret)
+    )
+)
+
+TRACEPOINT_EVENT(pmbackend, pmb_nfree_enter,
+   TP_ARGS(pmb_handle*, handle),
+    TP_FIELDS(
+        ctf_integer_hex(uint64_t, handle, (uint64_t)handle)
+    )
+)
+
+TRACEPOINT_EVENT(pmbackend, pmb_nfree_exit,
+   TP_ARGS(pmb_handle*, handle, size_t, nfree, uint32_t, line),
+    TP_FIELDS(
+        ctf_integer_hex(uint64_t, handle, (uint64_t)handle)
+	ctf_integer(size_t, nfree, nfree)
+	ctf_integer(uint32_t, line, line)
+    )
+)
+
+TRACEPOINT_EVENT(pmbackend, pmb_ntotal_enter,
+   TP_ARGS(pmb_handle*, handle),
+    TP_FIELDS(
+        ctf_integer_hex(uint64_t, handle, (uint64_t)handle)
+    )
+)
+
+TRACEPOINT_EVENT(pmbackend, pmb_ntotal_exit,
+   TP_ARGS(pmb_handle*, handle, uint64_t, ntotal, uint32_t, line),
+    TP_FIELDS(
+        ctf_integer_hex(uint64_t, handle, (uint64_t)handle)
+	ctf_integer(uint64_t, ntotal, ntotal)
+	ctf_integer(uint32_t, line, line)
+    )
+)
+
+TRACEPOINT_EVENT(pmbackend, pmb_iter_open_enter,
+   TP_ARGS(pmb_handle*, handle),
+    TP_FIELDS(
+        ctf_integer_hex(uint64_t, handle, (uint64_t)handle)
+    )
+)
+
+TRACEPOINT_EVENT(pmbackend, pmb_iter_open_exit,
+   TP_ARGS(pmb_handle*, handle, uint32_t, line),
+    TP_FIELDS(
+        ctf_integer_hex(uint64_t, handle, (uint64_t)handle)
+	ctf_integer(uint32_t, line, line)
+    )
+)
+
+TRACEPOINT_EVENT(pmbackend, pmb_iter_close_enter,
+  TP_ARGS(pmb_iter*, iter),
+    TP_FIELDS(
+        ctf_integer_hex(uint64_t, iter, (uint64_t)iter)
+	ctf_integer_hex(uint64_t, handle, (uint64_t)(iter->handle))
+	ctf_integer_hex(uint64_t, vector_pos, iter->vector_pos)
+	ctf_integer_hex(uint64_t, vector_len, iter->vector_len)
+    )
+)
+
+TRACEPOINT_EVENT(pmbackend, pmb_iter_close_exit,
+   TP_ARGS(pmb_iter*, iter),
+    TP_FIELDS(
+        ctf_integer_hex(uint64_t, iter, (uint64_t)iter)
+	ctf_integer_hex(uint64_t, handle, (uint64_t)(iter->handle))
+	ctf_integer_hex(uint64_t, vector_pos, iter->vector_pos)
+	ctf_integer_hex(uint64_t, vector_len, iter->vector_len)
+    )
+)
+
+TRACEPOINT_EVENT(pmbackend, pmb_iter_get_enter,
+  TP_ARGS(pmb_iter*, iter),
+    TP_FIELDS(
+        ctf_integer_hex(uint64_t, iter, (uint64_t)iter)
+	    ctf_integer_hex(uint64_t, handle, (uint64_t)iter->handle)
+	    ctf_integer_hex(uint64_t, vector_pos, iter->vector_pos)
+	    ctf_integer_hex(uint64_t, vector_len, iter->vector_len)
+    )
+)
+
+TRACEPOINT_EVENT(pmbackend, pmb_iter_get_exit,
+  TP_ARGS(pmb_iter*, iter, uint32_t, line),
+    TP_FIELDS(
+        ctf_integer_hex(uint64_t, iter, (uint64_t)iter)
+	    ctf_integer_hex(uint64_t, handle, (uint64_t)iter->handle)
+	    ctf_integer_hex(uint64_t, vector_pos, iter->vector_pos)
+	    ctf_integer_hex(uint64_t, vector_len, iter->vector_len)
+	    ctf_integer(uint32_t, line, line)
+	)
+)
+
+TRACEPOINT_EVENT(pmbackend, pmb_iter_next_enter,
+  TP_ARGS(pmb_iter*, iter),
+    TP_FIELDS(
+        ctf_integer_hex(uint64_t, iter, (uint64_t)iter)
+	ctf_integer_hex(uint64_t, handle, (uint64_t)iter->handle)
+	ctf_integer_hex(uint64_t, vector_pos, iter->vector_pos)
+	ctf_integer_hex(uint64_t, vector_len, iter->vector_len)
+    )
+)
+
+TRACEPOINT_EVENT(pmbackend, pmb_iter_next_exit,
+  TP_ARGS(pmb_iter*, iter, uint32_t, line),
+    TP_FIELDS(
+        ctf_integer_hex(uint64_t, iter, (uint64_t)iter)
+	ctf_integer_hex(uint64_t, handle, (uint64_t)iter->handle)
+	ctf_integer_hex(uint64_t, vector_pos, iter->vector_pos)
+	ctf_integer_hex(uint64_t, vector_len, iter->vector_len)
+	ctf_integer(uint32_t, line, line)
+	)
+)
+
+TRACEPOINT_EVENT(pmbackend, pmb_iter_valid,
+  TP_ARGS(pmb_iter*, iter),
+    TP_FIELDS(
+        ctf_integer_hex(uint64_t, iter, (uint64_t)iter)
+	ctf_integer_hex(uint64_t, handle, (uint64_t)iter->handle)
+	ctf_integer_hex(uint64_t, vector_pos, iter->vector_pos)
+	ctf_integer_hex(uint64_t, vector_len, iter->vector_len)
+    )
+)
+
+TRACEPOINT_EVENT(pmbackend, pmb_iter_pos_enter,
+  TP_ARGS(pmb_iter*, iter),
+    TP_FIELDS(
+        ctf_integer_hex(uint64_t, iter, (uint64_t)iter)
+	ctf_integer_hex(uint64_t, handle, (uint64_t)iter->handle)
+	ctf_integer_hex(uint64_t, vector_pos, iter->vector_pos)
+	ctf_integer_hex(uint64_t, vector_len, iter->vector_len)
+    )
+)
+
+

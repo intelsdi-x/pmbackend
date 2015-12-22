@@ -1,0 +1,13 @@
+TRACEPOINT_EVENT(caslist, caslist_push_enter,
+    TP_ARGS(void),
+    TP_FIELDS(
+        
+    )
+)
+
+TRACEPOINT_EVENT(caslist, caslist_push_exit,
+    TP_ARGS(void),
+    TP_FIELDS(
+        
+    )
+)

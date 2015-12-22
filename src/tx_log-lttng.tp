@@ -1,0 +1,111 @@
+TRACEPOINT_EVENT(tx_log, tx_slot_commit_enter,
+    TP_ARGS(),
+    TP_FIELDS(
+        
+    )
+)
+
+TRACEPOINT_EVENT(tx_log, tx_slot_commit_exit,
+    TP_ARGS(),
+    TP_FIELDS(
+        
+    )
+)
+
+TRACEPOINT_EVENT(tx_log, tx_slot_checksum_enter,
+    TP_ARGS(),
+    TP_FIELDS(
+        
+    )
+)
+
+TRACEPOINT_EVENT(tx_log, tx_slot_checksum_exit,
+    TP_ARGS(),
+    TP_FIELDS(
+        
+    )
+)
+
+TRACEPOINT_EVENT(tx_log, tx_log_free_slot_enter,
+    TP_ARGS(),
+    TP_FIELDS(
+        
+    )
+)
+
+TRACEPOINT_EVENT(tx_log, tx_log_free_slot_exit,
+    TP_ARGS(),
+    TP_FIELDS(
+        
+    )
+)
+
+TRACEPOINT_EVENT(tx_log, tx_slot_execute_enter,
+    TP_ARGS(),
+    TP_FIELDS(
+        
+    )
+)
+
+TRACEPOINT_EVENT(tx_log, tx_slot_execute_exit,
+    TP_ARGS(),
+    TP_FIELDS(
+        
+    )
+)
+
+TRACEPOINT_EVENT(tx_log, tx_update_block_enter,
+    TP_ARGS(),
+    TP_FIELDS(
+        
+    )
+)
+
+TRACEPOINT_EVENT(tx_log, tx_update_block_exit,
+    TP_ARGS(),
+    TP_FIELDS(
+        
+    )
+)
+
+TRACEPOINT_EVENT(tx_log, tx_slot_meta_upd_add_enter,
+    TP_ARGS(void),
+    TP_FIELDS(
+        
+    )
+)
+
+TRACEPOINT_EVENT(tx_log, tx_slot_meta_upd_add_exit,
+    TP_ARGS(void),
+    TP_FIELDS(
+        
+    )
+)
+
+TRACEPOINT_EVENT(tx_log, tx_slot_meta_upd_process_enter,
+    TP_ARGS(void),
+    TP_FIELDS(
+        
+    )
+)
+
+TRACEPOINT_EVENT(tx_log, tx_slot_meta_upd_process_exit,
+    TP_ARGS(void),
+    TP_FIELDS(
+        
+    )
+)
+
+TRACEPOINT_EVENT(tx_log, backend_memcpy_enter,
+    TP_ARGS(void),
+    TP_FIELDS(
+        
+    )
+)
+
+TRACEPOINT_EVENT(tx_log, backend_memcpy_exit,
+    TP_ARGS(void),
+    TP_FIELDS(
+        
+    )
+)

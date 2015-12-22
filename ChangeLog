@@ -1,0 +1,3 @@
+v0.1
+	* First version, regions for small and large objects, key-value based,
+	  journal for transactions, all operations on memory mapped file.
