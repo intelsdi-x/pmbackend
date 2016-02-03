@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2015, Intel Corporation
+ * Copyright (c) 2014-2016, Intel Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -29,7 +29,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
 
 #include <stdio.h>
 #include <string.h>
@@ -89,6 +88,8 @@ _sync_thread(void *args)
     return NULL;
 }
 
+#define TX_LOG_SIZE 128UL * 1024 * 1024
+
 pmb_handle*
 pmb_open(pmb_opts* opts, uint8_t* error)
 {
@@ -108,7 +109,7 @@ pmb_open(pmb_opts* opts, uint8_t* error)
     }
     // Fails when trying open existing store with changed params
     handle->backend = backend_open(opts->path, opts->data_size, opts->meta_size,
-            opts->write_log_entries, 256 * 1024 * 1024 / opts->write_log_entries,
+            opts->write_log_entries, TX_LOG_SIZE / opts->write_log_entries,
             opts->max_key_len, opts->max_val_len,
             opts->meta_max_key_len, opts->meta_max_val_len,
 			opts->sync_type);
@@ -116,13 +117,13 @@ pmb_open(pmb_opts* opts, uint8_t* error)
     if (handle->backend == NULL) {
         // try create if cannot open
         handle->backend = backend_create(opts->path, opts->data_size, opts->meta_size,
-                opts->write_log_entries, 256 * 1024 * 1024 / opts->write_log_entries,
+                opts->write_log_entries, TX_LOG_SIZE / opts->write_log_entries,
                 opts->max_key_len, opts->max_val_len,
 				opts->meta_max_key_len, opts->meta_max_val_len,
                 S_IRWXU, opts->sync_type);
         if (handle->backend == NULL) {
             *error = PMB_ECREAT;
-            logprintf("Cannot create pmemblk pool: %s\n", strerror(errno));
+            logprintf("pmb_open: cannot create store: %s\n", strerror(errno));
             free(handle);
             tracepoint(pmbackend, pmb_open_exit, "NULL");
             return NULL;
@@ -146,21 +147,23 @@ pmb_open(pmb_opts* opts, uint8_t* error)
 
     handle->total_objs_count = backend_nblock(handle->backend, PMB_DATA);
     handle->meta_objs_count = backend_nblock(handle->backend, PMB_META);
-    // initialize freelist, free list will be populated, when data will be checked
-    // with iterator
-    handle->free_list = caslist_new(handle->total_objs_count);
-    handle->meta_free_list = caslist_new(handle->meta_objs_count);
 
     if (empty) {
         // empty store, skip recovery
+        // initialize freelist, free list will be populated, when data will be checked
+        // with iterator
+        handle->free_list = caslist_new(1, handle->total_objs_count);
+        handle->meta_free_list = caslist_new(1, handle->meta_objs_count);
         handle->objs_list = NULL;
         handle->meta_objs_list = NULL;
         populate_free_list(handle);
     } else {
         // there was write to store, perform full recovery
         tx_log_check(handle);  // recover transactions
-        handle->objs_list = caslist_new(handle->total_objs_count);
-        handle->meta_objs_list = caslist_new(handle->meta_objs_count);
+        handle->free_list = caslist_new(0, 0);
+        handle->meta_free_list = caslist_new(0, 0);
+        handle->objs_list = caslist_new(0, 0);
+        handle->meta_objs_list = caslist_new(0, 0);
         recovery(handle);
     }
 
@@ -183,13 +186,13 @@ pmb_close(pmb_handle* handle)
 		return PMB_ERR;
 	}
 
-    if (handle->objs_list != NULL){
+    if (handle->objs_list != NULL) {
         caslist_free(handle->objs_list);
     }
 
-    if (handle->meta_objs_list != NULL){
-		caslist_free(handle->meta_objs_list);
-	}
+    if (handle->meta_objs_list != NULL) {
+        caslist_free(handle->meta_objs_list);
+    }
 
     caslist_free(handle->free_list);
     caslist_free(handle->meta_free_list);
@@ -203,7 +206,7 @@ pmb_close(pmb_handle* handle)
     backend_close(handle->backend);
 
     free(handle);
-    handle = NULL;
+
     tracepoint(pmbackend, pmb_close_exit, "OK");
     return PMB_OK;
 }
@@ -233,7 +236,7 @@ pmb_tx_commit(pmb_handle* handle, uint64_t tx_slot)
 {
 	uint8_t ret;
 	tracepoint(pmbackend, pmb_tx_commit_enter, handle, tx_slot);
-	if (handle == NULL || tx_slot == 0) {
+	if (handle == NULL || tx_slot == 0 || tx_slot > handle->op_log.tx_slots_count) {
 		logprintf(INVALID_INPUT, "pmb_tx_commit");
 		tracepoint(pmbackend, pmb_tx_commit_exit, handle, tx_slot, PMB_ERR);
 		return PMB_ERR;
@@ -247,7 +250,7 @@ uint8_t
 pmb_tx_execute(pmb_handle* handle, uint64_t tx_slot)
 {
 	tracepoint(pmbackend, pmb_tx_execute_enter, handle, tx_slot);
-	if (handle == NULL || tx_slot == 0) {
+    if (handle == NULL || tx_slot == 0 || tx_slot > handle->op_log.tx_slots_count) {
 		logprintf(INVALID_INPUT, "pmb_tx_execute");
 		tracepoint(pmbackend, pmb_tx_execute_exit, handle, tx_slot, PMB_ERR);
 		return PMB_ERR;
@@ -262,7 +265,7 @@ uint8_t
 pmb_tx_abort(pmb_handle* handle, uint64_t tx_slot)
 {
 	tracepoint(pmbackend, pmb_tx_abort_enter, handle, tx_slot);
-	if (handle == NULL || tx_slot == 0) {
+    if (handle == NULL || tx_slot == 0 || tx_slot > handle->op_log.tx_slots_count) {
 		logprintf(INVALID_INPUT, "pmb_tx_abort");
 		tracepoint(pmbackend, pmb_tx_abort_exit, handle, tx_slot, PMB_ERR);
 		return PMB_ERR;
@@ -320,7 +323,7 @@ pmb_tput(pmb_handle* handle, uint64_t tx_slot, pmb_pair* kv)
 {
 	tracepoint(pmbackend, pmb_tput_enter, handle, kv, tx_slot);
     // validate input parameters
-	if (handle == NULL || kv == NULL || tx_slot == 0 ||
+	if (handle == NULL || kv == NULL || tx_slot == 0 || tx_slot > handle->op_log.tx_slots_count ||
 		kv->key_len > handle->max_key_len ||
 		kv->key_len == 0 || kv->key == NULL ||
 		(kv->val == NULL && kv->val_len != 0 ) ||
@@ -544,8 +547,8 @@ pmb_tdel(pmb_handle* handle, uint64_t tx_slot, uint64_t obj_id)
 {
 	uint8_t ret = 0;
 	tracepoint(pmbackend, pmb_tdel_enter, handle, obj_id, tx_slot);
-	if (handle == NULL || tx_slot == 0 ||
-            tx_slot > handle->op_log.tx_slots_count || obj_id == 0) {
+	if (handle == NULL || tx_slot == 0 || tx_slot > handle->op_log.tx_slots_count ||
+            obj_id == 0) {
 		logprintf(INVALID_INPUT, "pmb_tdel");
 		tracepoint(pmbackend, pmb_tdel_exit, handle, obj_id, tx_slot, PMB_ERR);
 		return PMB_ERR;
@@ -567,9 +570,9 @@ pmb_nfree(pmb_handle* handle, uint8_t region)
 	}
 	tracepoint(pmbackend, pmb_nfree_exit, handle, handle->free_list->counter, __LINE__);
 	if (region) {
-		return handle->meta_free_list->counter;
+		return caslist_size(handle->meta_free_list);
 	}
-	return handle->free_list->counter;
+	return caslist_size(handle->free_list);
 }
 
 uint64_t
@@ -690,12 +693,12 @@ pmb_iter_get(pmb_iter* iter, pmb_pair* pair)
 uint8_t
 pmb_iter_next(pmb_iter* iter)
 {
-	caslist* list;
 	if (iter == NULL) {
 		logprintf(INVALID_INPUT, "pmb_iter_next");
 		return PMB_ERR;
 	}
 	tracepoint(pmbackend, pmb_iter_next_enter, iter);
+    caslist* list;
 	if (iter->region) {
 		list = iter->handle->meta_objs_list;
 	} else {
@@ -714,19 +717,9 @@ pmb_iter_valid(pmb_iter* iter)
 {
 	if (iter == NULL || iter->vector_pos == 0) {
 		return 0;
-	}
-	uint64_t total;
-	if (iter->region) {
-		total = iter->handle->meta_objs_count;
 	} else {
-		total = iter->handle->total_objs_count;
-	}
-
-	if (iter->vector_pos > total) {
-		return 0;
-	}
-	tracepoint(pmbackend, pmb_iter_valid, iter);
-    return iter->vector_pos;
+        return 1;
+    }
 }
 
 typedef struct {

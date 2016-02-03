@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Intel Corporation
+ * Copyright (c) 2015-2016, Intel Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -100,7 +100,7 @@ typedef struct {
  */
 struct _pmb_handle {
     struct _backend*     backend;  // handle to backend
-    uint64_t     total_objs_count; // statistic from pmemblk
+    uint64_t     total_objs_count;
     uint64_t     meta_objs_count;
     uint32_t     max_key_len;      // from superblock
     uint32_t     max_val_len;      // from superblock
@@ -117,8 +117,7 @@ struct _pmb_handle {
 
 struct pmb_iter {
     struct _pmb_handle* handle;
-    int				    region;
-    uint64_t            vector_len;
+    int                 region;
     uint64_t            vector_pos;
 };
 

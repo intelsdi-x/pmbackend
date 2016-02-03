@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Intel Corporation
+ * Copyright (c) 2015-2016, Intel Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -96,12 +96,14 @@ TEST(TPutMeta, ReturnErrorCauseKeyIsNull) {
 }
 
 TEST(TPutMeta, ReturnErrorCauseThereIsNoFreeObjectLeft) {
-	pmb_handle *handle = create_handle();
+  	pmb_handle *handle = create_handle();
 	pmb_pair to_put = generate_put_input();
 	uint64_t tx_slot;
 
 	EXPECT_EQ(PMB_OK, pmb_tx_begin(handle, &tx_slot));
-	handle->meta_free_list->counter=0; // lest empty free list
+	handle->meta_free_list->begin = 0;
+	handle->meta_free_list->end = 0;
+	handle->meta_free_list->size = 0; // lest empty free list
 
 	EXPECT_EQ(PMB_ENOSPC, pmb_tput_meta(handle, tx_slot, &to_put));
 

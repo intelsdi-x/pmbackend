@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Intel Corporation
+ * Copyright (c) 2015-2016, Intel Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -36,16 +36,45 @@
 #include <stdint.h>
 #include <pthread.h>
 
-typedef struct list {
-    uint64_t *data;
-    uint64_t size;
-    int64_t counter;
-    pthread_mutex_t lock_mtx;
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+typedef struct _caslist_link {
+    uint64_t begin;
+    uint64_t end;
+    struct _caslist_link* next;
+} caslist_link;
+
+typedef struct _caslist {
+    ssize_t size;
+    uint64_t begin;
+    uint64_t end;
+    pthread_mutex_t mutex;
+    caslist_link* next;
 } caslist;
 
-caslist* caslist_new(uint64_t size);
-void caslist_free(caslist *list);
-void caslist_push(caslist *list, uint64_t data);
-uint8_t caslist_pop(caslist *list, uint64_t *obj_id_pt);
+// returns pointer to the new caslist with begin and end defined or NULL
+// list with range <begin > 0, end > 0>
+// to create empty list: begin = 0, end = 0
+// it's not allowed to create list with range: begin = 0, end > 0
+caslist* caslist_new (uint64_t begin, uint64_t end);
 
+// gets next value from caslist defined ranges, returns 0 on success, 1 on failure
+// val - out value
+uint8_t caslist_pop (caslist* list, uint64_t* val);
+
+// adds new val to the caslist ranges, returns 0 on success, 1 on failure
+// val - in value
+void caslist_push (caslist* list, uint64_t val);
+
+// deallocates the list and associated structures
+void caslist_free (caslist* list);
+
+// return combined length of all ranges in the list
+ssize_t caslist_size (caslist* list);
+
+#ifdef __cplusplus
+}
+#endif
 #endif //CAS_LIST_H

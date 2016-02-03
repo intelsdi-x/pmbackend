@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Intel Corporation
+ * Copyright (c) 2015-2016, Intel Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -51,10 +51,7 @@ extern "C" {
 #define PMB_ESBIN     7 // superblock invalid
 #define PMB_ESIZE     8 // key or value exceeded max
 #define PMB_EWRGID    9 // ID of data data block to update with meta function or
-                         // ID of meta block to update with data function
-
-//#define PMB_ITER_READ		 0
-//#define PMB_ITER_CREATE_LST  1
+                        // ID of meta block to update with data function
 
 #define PMB_DATA 0
 #define PMB_META 1

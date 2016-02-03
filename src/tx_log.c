@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Intel Corporation
+ * Copyright (c) 2015-2016, Intel Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -58,7 +58,7 @@ void
 tx_log_init(struct _pmb_handle *store, uint8_t tx_slots_count)
 {
     store->op_log.tx_slots_count = tx_slots_count;
-    store->op_log.tx_slots_list = caslist_new(tx_slots_count);
+    store->op_log.tx_slots_list = caslist_new(1, tx_slots_count);
     store->op_log.tx_slot_capacity =
             (get_block_size(store->max_key_len, store->max_val_len) - sizeof(tx_slot))
             / sizeof(tx_entry);
@@ -213,10 +213,6 @@ uint8_t
 tx_slot_execute(struct _pmb_handle *store, uint64_t tx_slot_id)
 {
 	tracepoint(tx_log, tx_slot_execute_enter);
-    if (tx_slot_id == 0 || tx_slot_id > store->op_log.tx_slots_count) {
-        tracepoint(tx_log, tx_slot_execute_exit);
-        return PMB_ERR;
-    }
 
     tx_slot_id--;
     void *slot_ptr = backend_tx_direct(store->backend, tx_slot_id);
@@ -285,10 +281,6 @@ tx_slot_execute(struct _pmb_handle *store, uint64_t tx_slot_id)
 uint8_t
 tx_slot_abort(struct _pmb_handle *store, uint64_t tx_slot_id)
 {
-     if (tx_slot_id == 0 || tx_slot_id > store->op_log.tx_slots_count) {
-        return PMB_ERR;
-     }
-
      tx_slot_id--;
      void *slot_ptr = backend_tx_direct(store->backend, tx_slot_id);
 
@@ -353,10 +345,6 @@ uint8_t
 tx_slot_op_write(struct _pmb_handle *store, uint64_t tx_slot_id,
         uint64_t obj_id, uint32_t size)
 {
-    if (tx_slot_id == 0 || tx_slot_id > store->op_log.tx_slots_count) {
-        return PMB_ERR;
-    }
-
     tx_slot_id--;
     void *slot_ptr = backend_tx_direct(store->backend, tx_slot_id);
 
@@ -381,10 +369,6 @@ uint8_t
 tx_slot_op_small_update(struct _pmb_handle *store, uint64_t tx_slot_id,
         uint64_t obj_id, void *data, uint32_t offset, uint32_t size)
 {
-    if (tx_slot_id == 0 || tx_slot_id > store->op_log.tx_slots_count) {
-        return PMB_ERR;
-    }
-
     tx_slot_id--;
     void *slot_ptr = backend_tx_direct(store->backend, tx_slot_id);
 
@@ -412,10 +396,6 @@ uint8_t
 tx_slot_op_update(struct _pmb_handle *store, uint64_t tx_slot_id,
         uint64_t old_obj_id, uint64_t new_obj_id, uint32_t size)
 {
-    if (tx_slot_id == 0 || tx_slot_id > store->op_log.tx_slots_count) {
-        return PMB_ERR;
-    }
-
     tx_slot_id--;
     void *slot_ptr = backend_tx_direct(store->backend, tx_slot_id);
 
@@ -441,10 +421,6 @@ uint8_t
 tx_slot_op_remove(struct _pmb_handle *store, uint64_t tx_slot_id,
         uint64_t obj_id)
 {
-    if (tx_slot_id == 0 || tx_slot_id > store->op_log.tx_slots_count) {
-        return PMB_ERR;
-    }
-
     tx_slot_id--;
     void *slot_ptr = backend_tx_direct(store->backend, tx_slot_id);
 

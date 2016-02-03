@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Intel Corporation
+ * Copyright (c) 2015-2016, Intel Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,7 +30,6 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-
 #include "backend.h"
 #include "libpmem.h"
 #include "kv.h"
@@ -41,7 +40,6 @@
 
 #include <sys/param.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 #include <errno.h>
 #include <assert.h>
@@ -277,8 +275,8 @@ _backend_map_common(struct pool_set* set, size_t poolsize, size_t meta_poolsize,
 	LOG(4, "meta area %p meta size %zu meta_bsize %zu",
 			backend->meta, backend->metasize, meta_bsize);
 
-    printf("address %p tx_log %p data area %p data size %zu bsize %u, meta area\
-            %p meta size %zu meta_bsize %u\n", backend->addr, backend->tx_log,
+    printf("address %p tx_log %p data area %p data size %zu bsize %u, meta area " \
+            "%p meta size %zu meta_bsize %u\n", backend->addr, backend->tx_log,
             backend->data, backend->datasize, backend->bsize, backend->meta,
             backend->metasize, backend->meta_bsize);
 

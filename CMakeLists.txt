@@ -8,7 +8,8 @@ add_library(libpmem STATIC IMPORTED)
 set_property(TARGET libpmem PROPERTY IMPORTED_LOCATION ${CMAKE_SOURCE_DIR}/nvml/src/nondebug/libpmem.a)
 
 include_directories(include
-        src nvml/src/common
+        src
+        nvml/src/common
         nvml/src/include
         tests/unit_tests)
 
@@ -54,7 +55,8 @@ add_executable(tests_runner
         tests/unit_tests/pmb_tx_abort.cc
         tests/unit_tests/pmb_tx_begin.cc
         tests/unit_tests/pmb_tx_commit.cc
-        tests/unit_tests/pmb_tx_execute.cc)
+        tests/unit_tests/pmb_tx_execute.cc
+        tests/unit_tests/caslist.cc)
 
 target_link_libraries(tests_runner ${GTEST_BOTH_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} pmbackend -luuid)
 
