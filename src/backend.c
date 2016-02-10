@@ -306,8 +306,8 @@ backend_create(const char *path, size_t data_size, size_t meta_size,
 		uint32_t meta_max_key_len, uint32_t meta_max_val_len,
         mode_t mode, uint8_t sync_type)
 {
-    size_t bsize = sizeof(pmb_obj_meta) + max_key_len + max_val_len;
-    size_t meta_bsize = sizeof(pmb_obj_meta) + meta_max_key_len + meta_max_val_len;
+    size_t bsize = sizeof(pmb_data_hdr) + max_key_len + max_val_len;
+    size_t meta_bsize = sizeof(pmb_data_hdr) + meta_max_key_len + meta_max_val_len;
 
     LOG(3, "path %s bsize %zu poolsize %zu mode %d",
 			path, bsize, data_size, mode);
@@ -359,8 +359,8 @@ backend_open(const char *path, size_t data_size, size_t meta_size,
 		uint32_t meta_max_key_len, uint32_t meta_max_val_len,
         uint8_t sync_type)
 {
-    size_t bsize = sizeof(pmb_obj_meta) + max_key_len + max_val_len;
-    size_t meta_bsize = sizeof(pmb_obj_meta) + meta_max_key_len + meta_max_val_len;
+    size_t bsize = sizeof(pmb_data_hdr) + max_key_len + max_val_len;
+    size_t meta_bsize = sizeof(pmb_data_hdr) + meta_max_key_len + meta_max_val_len;
 
     LOG(3, "path %s bsize %zu", path, bsize);
     LOG(3, "path %s meta_bsize %zu", path, meta_bsize);
@@ -444,7 +444,7 @@ backend_get(struct _backend* backend, uint64_t obj_id, uint8_t *error)
 		return NULL;
     }
 
-	if (((pmb_obj_meta *)obj_ptr)->flch64 == 0) {
+	if (((pmb_data_hdr *)obj_ptr)->flch64 == 0) {
 		*error = BACKEND_ENOENT;
 //		logprintf("backend: Error for %zu: 0 checksum %p\n", obj_id, obj_ptr);
 		tracepoint(pmem_backend, backend_get_exit);
@@ -572,7 +572,7 @@ backend_set_zero(struct _backend* backend, void *obj_ptr)
         return BACKEND_ENOENT;
     }
 
-	uint64_t size = sizeof(pmb_obj_meta) + ((pmb_obj_meta *)obj_ptr)->key_len + ((pmb_obj_meta *)obj_ptr)->val_len;
+	uint64_t size = sizeof(pmb_data_hdr) + ((pmb_data_hdr *)obj_ptr)->key_len + ((pmb_data_hdr *)obj_ptr)->val_len;
 
 	tracepoint(pmem_backend, memset_enter);
 	memset(obj_ptr, 0, size);

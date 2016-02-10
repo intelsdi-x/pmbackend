@@ -61,7 +61,7 @@ int main(int argc, const char *argv[]) {
     opts.data_size = STORE_SIZE;
     opts.meta_size= STORE_SIZE / 10;
     opts.meta_max_key_len = KEY_LEN;
-	opts.meta_max_val_len = VAL_LEN;
+    opts.meta_max_val_len = VAL_LEN;
     opts.sync_type = PMB_NOSYNC;
     uint8_t error;
     pmb_handle *store = pmb_open(&opts, &error);
@@ -72,7 +72,7 @@ int main(int argc, const char *argv[]) {
     }
 
     pmb_pair p;
-    p.obj_id = 0;
+    p.blk_id = 0;
     void *key = malloc(opts.max_key_len);
     void *val = malloc(VAL_LEN / 4);
     uint64_t ids[NUM];
@@ -82,10 +82,10 @@ int main(int argc, const char *argv[]) {
     if (iter != NULL) {
         while(pmb_iter_valid(iter)) {
             pmb_iter_get(iter, &p);
-            if (p.obj_id != 0)
-                printf("saved object: id %zu key %s\n", p.obj_id, (char *)p.key);
+            if (p.blk_id != 0)
+                printf("saved object: blk_id %zu id %zu key %s\n", p.blk_id, p.id, (char *)p.key);
             pmb_iter_next(iter);
-            p.obj_id = 0;
+            p.blk_id = 0;
         }
         pmb_iter_close(iter);
     }
@@ -96,17 +96,20 @@ int main(int argc, const char *argv[]) {
     p.key_len = KEY_LEN;
     p.val_len = VAL_LEN / 4;
 
+    uint8_t status;
     uint64_t tx_id;
     pmb_tx_begin(store, &tx_id);
     for(int i = 0; i < NUM; i++) {
         snprintf(key, KEY_LEN, "%0126d", i);
         snprintf(val, VAL_LEN, "%0131d", i);
-        if (pmb_tput(store, tx_id, &p) == PMB_OK) {
-            ids[i] = p.obj_id;
-            p.obj_id = 0;
+        p.id = i;
+        status = pmb_tput(store, tx_id, &p);
+        if (status == PMB_OK) {
+            ids[i] = p.blk_id;
+            p.blk_id = 0;
         } else {
             ids[i] = 0;
-            printf("put failed for: %d\n", i);
+            printf("put failed for: %d: %s\n", i, pmb_strerror(status));
         }
     }
     pmb_tx_commit(store, tx_id);
@@ -115,8 +118,7 @@ int main(int argc, const char *argv[]) {
     for(int i = 0; i < NUM; i++) {
         if (ids[i] != 0) {
             pmb_get(store, ids[i], &p);
-            //void *obj = pmemblk_direct(store->pool, ids[i]);
-            printf("id: %zu key %s obj_id %zu\n", ids[i], (char *)p.key, p.obj_id);
+            printf("blk_id: %zu id: %zu key %s blk_id %zu\n", ids[i], p.id, (char *)p.key, p.blk_id);
         } else {
             printf("!!! id 0 for %d !!!\n", i);
         }

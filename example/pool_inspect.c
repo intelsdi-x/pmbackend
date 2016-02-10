@@ -39,11 +39,11 @@
 
 int main(int argc, const char *argv[]) {
     if (argc != 6) {
-        printf("Usage %s <key len> <val len> <store size> <filename> <obj_id>\n", argv[0]);
+        printf("Usage %s <key len> <val len> <store size> <filename> <blk_id>\n", argv[0]);
         exit(1);
     }
 
-    uint64_t obj_id = strtol(argv[5], NULL, 10);
+    uint64_t blk_id = strtol(argv[5], NULL, 10);
     pmb_opts opts;
     opts.max_key_len = atoi(argv[1]);
     opts.max_val_len = atoi(argv[2]);
@@ -58,7 +58,7 @@ int main(int argc, const char *argv[]) {
         exit(1);
     }
 
-    pmb_inspect(handle, obj_id);
+    pmb_inspect(handle, blk_id);
 
     pmb_close(handle);
 

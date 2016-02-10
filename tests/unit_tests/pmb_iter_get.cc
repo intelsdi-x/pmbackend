@@ -69,9 +69,9 @@ TEST(IterGet, Success) {
 
 	pmb_iter *iter = pmb_iter_open(handle, 0); // get iterator
 
-	iter->vector_pos = to_put.obj_id;
+	iter->vector_pos = to_put.blk_id;
 	EXPECT_EQ(PMB_OK, pmb_iter_get(iter, &readed));
-	EXPECT_EQ(readed.obj_id, to_put.obj_id);
+	EXPECT_EQ(readed.blk_id, to_put.blk_id);
 	EXPECT_STREQ((char *)readed.key, (char *)to_put.key);
 	EXPECT_STREQ((char *)readed.val, (char *)to_put.val);
 

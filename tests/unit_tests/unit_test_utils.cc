@@ -81,10 +81,10 @@ void remove_handle(pmb_handle* handle) {
 	EXPECT_EQ(0, remove("single_thread.pool"));
 }
 
-pmb_pair generate_put_input(uint64_t obj_id, uint32_t offset, void* key, void* val, uint32_t key_len, uint32_t val_len) {
+pmb_pair generate_put_input(uint64_t blk_id, uint32_t offset, void* key, void* val, uint32_t key_len, uint32_t val_len) {
 
 	pmb_pair to_put;
-	to_put.obj_id = obj_id;
+	to_put.blk_id = blk_id;
 	to_put.offset = offset;
 	to_put.key = key;
 	to_put.val = val;
@@ -109,14 +109,14 @@ pmb_handle* prepare_handle_for_iter(void) {
 	return handle;
 }
 
-void validate_save(pmb_handle* handle, uint64_t obj_id, pmb_pair inserted) {
+void validate_save(pmb_handle* handle, uint64_t blk_id, pmb_pair inserted) {
 	pmb_pair readed;
-	printf("Validating %zu\n", obj_id);
-	EXPECT_EQ(PMB_OK, pmb_get(handle, obj_id, &readed));
+	printf("Validating %zu\n", blk_id);
+	EXPECT_EQ(PMB_OK, pmb_get(handle, blk_id, &readed));
 	EXPECT_STREQ((char *)readed.key, (char *)inserted.key);
 	EXPECT_STREQ((char *)readed.val, (char *)inserted.val);
 	EXPECT_EQ(readed.key_len, inserted.key_len);
 	EXPECT_EQ(readed.val_len, inserted.val_len);
 	EXPECT_EQ(readed.offset, 0);
-	EXPECT_EQ(readed.obj_id, obj_id);
+	EXPECT_EQ(readed.blk_id, blk_id);
 }

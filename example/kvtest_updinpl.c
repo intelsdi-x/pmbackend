@@ -63,7 +63,7 @@ int main(int argc, const char *argv[]) {
     opts.data_size = STORE_SIZE;
     opts.meta_size= STORE_SIZE;
     opts.meta_max_key_len = KEY_LEN;
-	opts.meta_max_val_len = VAL_LEN;
+    opts.meta_max_val_len = VAL_LEN;
     uint8_t error;
     pmb_handle *handle = pmb_open(&opts, &error);
     if (error != PMB_OK) {
@@ -73,7 +73,7 @@ int main(int argc, const char *argv[]) {
     }
 
     pmb_pair p, m;
-    p.obj_id = 0;
+    p.blk_id = 0;
     void *key = malloc(opts.max_key_len);
     void *val = malloc(MAX_VAL_LEN);
     memset(val, 0, MAX_VAL_LEN);
@@ -83,10 +83,10 @@ int main(int argc, const char *argv[]) {
     if (iter != NULL) {
         while(pmb_iter_valid(iter)) {
             pmb_iter_get(iter, &p);
-            if (p.obj_id != 0)
-                printf("saved object: id %zu key %s\n", p.obj_id, (char *)p.key);
+            if (p.blk_id != 0)
+                printf("saved object: id %zu key %s\n", p.blk_id, (char *)p.key);
             pmb_iter_next(iter);
-            p.obj_id = 0;
+            p.blk_id = 0;
         }
         pmb_iter_close(iter);
     }
@@ -97,32 +97,32 @@ int main(int argc, const char *argv[]) {
     p.key_len = KEY_LEN;
     p.val_len = VAL_LEN;
 
-    m.obj_id = 0;
+    m.blk_id = 0;
     m.offset = 0;
     m.key = key;
     m.val = val;
     m.key_len = KEY_LEN;
     m.val_len = VAL_LEN;
 
-    uint64_t obj_id;
-    uint64_t m_obj_id;
+    uint64_t blk_id;
+    uint64_t m_blk_id;
     uint64_t tx_id;
     pmb_tx_begin(handle, &tx_id);
     for(int i = 0; i < (MAX_VAL_LEN) / (VAL_LEN); i++) {
         snprintf(key, KEY_LEN, "%0126d", i);
         snprintf(val, VAL_LEN, "%0131d", i);
         if (pmb_tput(handle, tx_id, &p) == PMB_OK) {
-            obj_id = p.obj_id;
-            printf("saved data to obj_id: %zu offset %u\n", p.obj_id, p.offset);
+            blk_id = p.blk_id;
+            printf("saved data to blk_id: %zu offset %u\n", p.blk_id, p.offset);
             p.offset += VAL_LEN;
         } else {
-            obj_id = 0;
+            blk_id = 0;
             printf("put data failed for: %d\n", i);
         }
         if (pmb_tput_meta(handle, tx_id, &m) == PMB_OK) {
-            printf("saved meta to obj_id: %zu offset %u\n", p.obj_id, p.offset);
+            printf("saved meta to blk_id: %zu offset %u\n", p.blk_id, p.offset);
             m.offset += VAL_LEN;
-            m_obj_id = m.obj_id;
+            m_blk_id = m.blk_id;
         } else {
             printf("put meta failed for: %d\n", i);
         }
@@ -130,11 +130,11 @@ int main(int argc, const char *argv[]) {
     pmb_tx_commit(handle, tx_id);
     pmb_tx_execute(handle, tx_id);
 
-    pmb_get(handle, obj_id, &p);
-    printf("id: %zu key %s val_len %u val %s\n", obj_id, (char *)p.key, p.val_len, (char*)p.val);
+    pmb_get(handle, blk_id, &p);
+    printf("id: %zu key %s val_len %u val %s\n", blk_id, (char *)p.key, p.val_len, (char*)p.val);
 
-    pmb_get(handle, m_obj_id, &m);
-    printf("id: %zu key %s val_len %u val %s\n", m_obj_id, (char *)m.key, m.val_len, (char*)m.val);
+    pmb_get(handle, m_blk_id, &m);
+    printf("id: %zu key %s val_len %u val %s\n", m_blk_id, (char *)m.key, m.val_len, (char*)m.val);
 
     free(key);
     free(val);

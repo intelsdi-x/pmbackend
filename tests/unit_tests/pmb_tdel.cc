@@ -60,17 +60,17 @@ TEST(TDelete, SuccessfullyRemoveObject ) {
 	EXPECT_EQ(1, count(handle, PMB_DATA));
 
 	EXPECT_EQ(PMB_OK, pmb_tx_begin(handle, &tx_slot));
-	EXPECT_EQ(PMB_OK, pmb_tdel(handle, tx_slot, to_put.obj_id));
+	EXPECT_EQ(PMB_OK, pmb_tdel(handle, tx_slot, to_put.blk_id));
 
 	EXPECT_EQ(1, count(handle, PMB_DATA));
-	EXPECT_EQ(PMB_OK, pmb_get(handle, to_put.obj_id, &readed));
+	EXPECT_EQ(PMB_OK, pmb_get(handle, to_put.blk_id, &readed));
 
 	EXPECT_EQ(PMB_OK, pmb_tx_commit(handle, tx_slot));
 	EXPECT_EQ(1, count(handle, PMB_DATA));
 
 	EXPECT_EQ(PMB_OK, pmb_tx_execute(handle, tx_slot));
 	EXPECT_EQ(0, count(handle, PMB_DATA));
-	EXPECT_EQ(PMB_ENOENT, pmb_get(handle, to_put.obj_id, &readed));
+	EXPECT_EQ(PMB_ENOENT, pmb_get(handle, to_put.blk_id, &readed));
 
 	remove_handle(handle);
 }

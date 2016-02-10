@@ -60,21 +60,21 @@ TEST(TxAbort, SuccessUpdate) {
 	EXPECT_EQ(PMB_OK, pmb_tput(handle, tx_slot, &to_put));
 	EXPECT_EQ(PMB_OK, pmb_tx_commit(handle, tx_slot));
 	EXPECT_EQ(PMB_OK, pmb_tx_execute(handle, tx_slot));
-	EXPECT_GT(to_put.obj_id, 0);
+	EXPECT_GT(to_put.blk_id, 0);
 
 	EXPECT_EQ(PMB_OK, pmb_tx_begin(handle, &tx_slot));
 	EXPECT_TRUE(0<tx_slot && tx_slot<=handle->op_log.tx_slots_count);
 
 	to_update.val = (char *)"Updated value";
-	to_update.obj_id = to_put.obj_id;
+	to_update.blk_id = to_put.blk_id;
 
 	EXPECT_EQ(PMB_OK, pmb_tput(handle,  tx_slot, &to_update));
-	validate_save(handle, to_update.obj_id, to_update);
-	validate_save(handle, to_put.obj_id, to_put);
+	validate_save(handle, to_update.blk_id, to_update);
+	validate_save(handle, to_put.blk_id, to_put);
 
 	EXPECT_EQ(PMB_OK, pmb_tx_abort(handle, tx_slot));
-	EXPECT_EQ(PMB_ENOENT, pmb_get(handle, to_update.obj_id, &readed));
-	validate_save(handle, to_put.obj_id, to_put);
+	EXPECT_EQ(PMB_ENOENT, pmb_get(handle, to_update.blk_id, &readed));
+	validate_save(handle, to_put.blk_id, to_put);
 
 	remove_handle(handle);
 }
@@ -93,7 +93,7 @@ TEST(TxAbort, SuccessWrite) {
 	EXPECT_EQ(PMB_OK, pmb_tput(handle,  tx_slot, &to_put));
 	EXPECT_EQ(PMB_OK, pmb_tx_abort(handle, tx_slot));
 
-	EXPECT_EQ(PMB_ENOENT, pmb_get(handle, to_put.obj_id, &readed));
+	EXPECT_EQ(PMB_ENOENT, pmb_get(handle, to_put.blk_id, &readed));
 	remove_handle(handle);
 }
 
@@ -113,11 +113,11 @@ TEST(TxAbort, SuccessDelete) {
 	EXPECT_EQ(PMB_OK, pmb_tx_begin(handle, &tx_slot));
 	EXPECT_TRUE(0<tx_slot && tx_slot<=handle->op_log.tx_slots_count);
 
-	EXPECT_EQ(PMB_OK, pmb_tdel(handle, tx_slot, to_put.obj_id));
-	validate_save(handle, to_put.obj_id, to_put);
+	EXPECT_EQ(PMB_OK, pmb_tdel(handle, tx_slot, to_put.blk_id));
+	validate_save(handle, to_put.blk_id, to_put);
 
 	EXPECT_EQ(PMB_OK, pmb_tx_abort(handle, tx_slot));
-	validate_save(handle, to_put.obj_id, to_put);
+	validate_save(handle, to_put.blk_id, to_put);
 
 	remove_handle(handle);
 }

@@ -56,9 +56,9 @@ TEST(ResolveConflict, MissingOneObject) {
     EXPECT_EQ(PMB_OK, pmb_tx_commit(handle, tx_slot));
     EXPECT_EQ(PMB_OK, pmb_tx_execute(handle, tx_slot));
 
-    EXPECT_EQ(PMB_ERR, pmb_resolve_conflict(handle, to_put.obj_id, 123));
+    EXPECT_EQ(PMB_ERR, pmb_resolve_conflict(handle, to_put.blk_id, 123));
 
-    validate_save(handle, to_put.obj_id, to_put);
+    validate_save(handle, to_put.blk_id, to_put);
 
     remove_handle(handle);
 }
@@ -72,7 +72,7 @@ TEST(DISABLED_ResolveConflict, SecondObjectVersionIsValid) {
     uint64_t tx_slot;
     EXPECT_EQ(PMB_OK, pmb_tx_begin(handle, &tx_slot));
     EXPECT_EQ(PMB_OK, pmb_tput(handle,  tx_slot, &to_put));
-    to_put.obj_id = 0;
+    to_put.blk_id = 0;
     EXPECT_EQ(PMB_OK, pmb_tput(handle,  tx_slot, &to_put));
     EXPECT_EQ(PMB_OK, pmb_tx_commit(handle, tx_slot));
     EXPECT_EQ(PMB_OK, pmb_tx_execute(handle, tx_slot));
@@ -82,10 +82,10 @@ TEST(DISABLED_ResolveConflict, SecondObjectVersionIsValid) {
     EXPECT_EQ(PMB_OK, pmb_tx_commit(handle, tx_slot));
     EXPECT_EQ(PMB_OK, pmb_tx_execute(handle, tx_slot));
 
-    EXPECT_EQ(to_put2.obj_id, pmb_resolve_conflict(handle, to_put.obj_id, to_put2.obj_id));
+    EXPECT_EQ(to_put2.blk_id, pmb_resolve_conflict(handle, to_put.blk_id, to_put2.blk_id));
 
-//    validate_save(handle, to_put2.obj_id, to_put2);
-    EXPECT_EQ(PMB_ENOENT, pmb_get(handle, to_put.obj_id, &to_read));
+//    validate_save(handle, to_put2.blk_id, to_put2);
+    EXPECT_EQ(PMB_ENOENT, pmb_get(handle, to_put.blk_id, &to_read));
 
     remove_handle(handle);
 }
@@ -108,17 +108,17 @@ TEST(DISABLED_ResolveConflict, FirstObjectVersionIsValid) {
     EXPECT_EQ(PMB_OK, pmb_tx_commit(handle, tx_slot));
     EXPECT_EQ(PMB_OK, pmb_tx_execute(handle, tx_slot));
 
-    to_put2.obj_id = 0;
+    to_put2.blk_id = 0;
 
     EXPECT_EQ(PMB_OK, pmb_tx_begin(handle, &tx_slot));
     EXPECT_EQ(PMB_OK, pmb_tput(handle,  tx_slot, &to_put));
     EXPECT_EQ(PMB_OK, pmb_tx_commit(handle, tx_slot));
     EXPECT_EQ(PMB_OK, pmb_tx_execute(handle, tx_slot));
 
-    EXPECT_EQ(to_put.obj_id, pmb_resolve_conflict(handle, to_put.obj_id, to_put2.obj_id));
+    EXPECT_EQ(to_put.blk_id, pmb_resolve_conflict(handle, to_put.blk_id, to_put2.blk_id));
 
-    validate_save(handle, to_put.obj_id, to_put2);
-    EXPECT_EQ(PMB_ENOENT, pmb_get(handle, to_put2.obj_id, &to_read));
+    validate_save(handle, to_put.blk_id, to_put2);
+    EXPECT_EQ(PMB_ENOENT, pmb_get(handle, to_put2.blk_id, &to_read));
 
     remove_handle(handle);
 }

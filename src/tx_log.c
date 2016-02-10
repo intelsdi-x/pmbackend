@@ -47,10 +47,10 @@
 #endif
 
 static void tx_update_block(struct _pmb_handle *store, uint8_t tx_id,
-        uint64_t obj_id, const void *payload, size_t offset, size_t len);
+        uint64_t blk_id, const void *payload, size_t offset, size_t len);
 
 static void tx_slot_meta_upd_add(struct _pmb_handle *store, uint8_t tx_id,
-        uint64_t obj_id, uint32_t size);
+        uint64_t blk_id, uint32_t size);
 
 static void tx_slot_meta_upd_process(struct _pmb_handle *store, uint8_t tx_id);
 
@@ -161,22 +161,22 @@ tx_slot_commit(struct _pmb_handle *store, uint64_t tx_slot_id)
 }
 static void
 tx_slot_meta_upd_add(struct _pmb_handle *store, uint8_t tx_id,
-        uint64_t obj_id, uint32_t size)
+        uint64_t blk_id, uint32_t size)
 {
 	tracepoint(tx_log, tx_slot_meta_upd_add_enter);
     size_t i = 0;
     tx_metalist *metalist = &store->op_log.upd_id_list[tx_id];
     tx_meta *meta;
     while (i < metalist->count) {
-        if (metalist->list[i].id == obj_id || metalist->list[i].id == 0)
+        if (metalist->list[i].id == blk_id || metalist->list[i].id == 0)
             break;
         i++;
     }
 
     meta = &metalist->list[i];
     if (meta->id == 0) {
-        meta->id = obj_id;
-        pmb_obj_meta *obj_meta = backend_direct(store->backend, obj_id);
+        meta->id = blk_id;
+        pmb_data_hdr *obj_meta = backend_direct(store->backend, blk_id);
         meta->version = obj_meta->version;
         meta->val_len = obj_meta->val_len;
         metalist->count++;
@@ -192,19 +192,19 @@ tx_slot_meta_upd_add(struct _pmb_handle *store, uint8_t tx_id,
 }
 
 static void
-tx_update_block(struct _pmb_handle *store, uint8_t tx_id, uint64_t obj_id,
+tx_update_block(struct _pmb_handle *store, uint8_t tx_id, uint64_t blk_id,
         const void *payload, size_t offset, size_t len)
 {
 	tracepoint(tx_log, tx_update_block_enter);
 
-    void *obj = backend_direct(store->backend, obj_id);
+    void *obj = backend_direct(store->backend, blk_id);
     tracepoint(tx_log, backend_memcpy_enter);
     backend_memcpy(store->backend,
-            obj + sizeof(pmb_obj_meta) + store->max_key_len + offset, payload,
+            obj + sizeof(pmb_data_hdr) + store->max_key_len + offset, payload,
             len);
 	tracepoint(tx_log, backend_memcpy_exit);
 
-    tx_slot_meta_upd_add(store, tx_id, obj_id, offset + len);
+    tx_slot_meta_upd_add(store, tx_id, blk_id, offset + len);
 
     tracepoint(tx_log, tx_update_block_exit);
 }
@@ -241,25 +241,25 @@ tx_slot_execute(struct _pmb_handle *store, uint64_t tx_slot_id)
         switch (txe->type) {
             case UPDATE:
             case REMOVE:
-                obj = backend_get(store->backend, txe->obj_id1, &error);
+                obj = backend_get(store->backend, txe->blk_id1, &error);
                 if (obj) {
                     backend_set_zero(store->backend, obj);
-                    if (txe->obj_id1 < store->total_objs_count) {
-                        caslist_push(store->free_list, txe->obj_id1);
+                    if (txe->blk_id1 < store->total_objs_count) {
+                        caslist_push(store->free_list, txe->blk_id1);
                     } else {
-                        caslist_push(store->meta_free_list, txe->obj_id1);
+                        caslist_push(store->meta_free_list, txe->blk_id1);
                     }
 
-                    logprintf("tx_log: releasing obj_id: %zu\n", txe->obj_id1);
+                    logprintf("tx_log: releasing blk_id: %zu\n", txe->blk_id1);
                 }
                 entries += sizeof(tx_entry);
                 break;
             case UPDINPLACE:
                 // copy to the existing object and sync
-                size = txe->obj_id2 >> 32;
-                offset = txe->obj_id2 & 0xffffffff;
+                size = txe->blk_id2 >> 32;
+                offset = txe->blk_id2 & 0xffffffff;
                 obj = entries + sizeof(tx_entry);
-                tx_update_block(store, tx_slot_id, txe->obj_id1, obj, offset,
+                tx_update_block(store, tx_slot_id, txe->blk_id1, obj, offset,
                         size);
                 entries = obj + size;
                 break;
@@ -301,7 +301,7 @@ tx_slot_abort(struct _pmb_handle *store, uint64_t tx_slot_id)
      void *update_clear_ptr, *write_clear_ptr;
      void *slot_end = slot_ptr + slot->size;
      tx_entry *txe;
-     // process entries, all new blocks (obj_id1 from WRITE and obj_id2 from UPDATE
+     // process entries, all new blocks (blk_id1 from WRITE and blk_id2 from UPDATE
      // should be zeroed and returned to the free list
 
      for(void *position_ptr = entries; position_ptr < slot_end;
@@ -309,21 +309,21 @@ tx_slot_abort(struct _pmb_handle *store, uint64_t tx_slot_id)
          txe = (tx_entry *)position_ptr;
          switch(txe->type) {
              case UPDATE:
-                 update_clear_ptr = backend_direct(store->backend, txe->obj_id2);
+                 update_clear_ptr = backend_direct(store->backend, txe->blk_id2);
                  backend_set_zero(store->backend, update_clear_ptr);
-                 if (txe->obj_id2 < store->total_objs_count) {
-                    caslist_push(store->free_list, txe->obj_id2);
+                 if (txe->blk_id2 < store->total_objs_count) {
+                    caslist_push(store->free_list, txe->blk_id2);
                  } else {
-                    caslist_push(store->meta_free_list, txe->obj_id2);
+                    caslist_push(store->meta_free_list, txe->blk_id2);
                  }
                  break;
              case WRITE:
-                 write_clear_ptr = backend_direct(store->backend, txe->obj_id1);
+                 write_clear_ptr = backend_direct(store->backend, txe->blk_id1);
                  backend_set_zero(store->backend, write_clear_ptr);
-                 if (txe->obj_id1 < store->total_objs_count) {
-                    caslist_push(store->free_list, txe->obj_id1);
+                 if (txe->blk_id1 < store->total_objs_count) {
+                    caslist_push(store->free_list, txe->blk_id1);
                  } else {
-                    caslist_push(store->meta_free_list, txe->obj_id1);
+                    caslist_push(store->meta_free_list, txe->blk_id1);
                  }
                  break;
              default:
@@ -343,7 +343,7 @@ tx_slot_abort(struct _pmb_handle *store, uint64_t tx_slot_id)
 
 uint8_t
 tx_slot_op_write(struct _pmb_handle *store, uint64_t tx_slot_id,
-        uint64_t obj_id, uint32_t size)
+        uint64_t blk_id, uint32_t size)
 {
     tx_slot_id--;
     void *slot_ptr = backend_tx_direct(store->backend, tx_slot_id);
@@ -359,7 +359,7 @@ tx_slot_op_write(struct _pmb_handle *store, uint64_t tx_slot_id,
     }
 
     entry->type = WRITE;
-    entry->obj_id1 = obj_id;
+    entry->blk_id1 = blk_id;
     slot->size += sizeof(tx_entry);
 
     return PMB_OK;
@@ -367,7 +367,7 @@ tx_slot_op_write(struct _pmb_handle *store, uint64_t tx_slot_id,
 
 uint8_t
 tx_slot_op_small_update(struct _pmb_handle *store, uint64_t tx_slot_id,
-        uint64_t obj_id, void *data, uint32_t offset, uint32_t size)
+        uint64_t blk_id, void *data, uint32_t offset, uint32_t size)
 {
     tx_slot_id--;
     void *slot_ptr = backend_tx_direct(store->backend, tx_slot_id);
@@ -383,8 +383,8 @@ tx_slot_op_small_update(struct _pmb_handle *store, uint64_t tx_slot_id,
     }
 
     entry->type = UPDINPLACE;
-    entry->obj_id1 = obj_id;
-    entry->obj_id2 = ((uint64_t) size << 32) | offset;
+    entry->blk_id1 = blk_id;
+    entry->blk_id2 = ((uint64_t) size << 32) | offset;
     backend_memcpy(store->backend, (void *) entry + sizeof(tx_entry), data,
             size);
     slot->size += sizeof(tx_entry) + size;
@@ -394,7 +394,7 @@ tx_slot_op_small_update(struct _pmb_handle *store, uint64_t tx_slot_id,
 
 uint8_t
 tx_slot_op_update(struct _pmb_handle *store, uint64_t tx_slot_id,
-        uint64_t old_obj_id, uint64_t new_obj_id, uint32_t size)
+        uint64_t old_blk_id, uint64_t new_blk_id, uint32_t size)
 {
     tx_slot_id--;
     void *slot_ptr = backend_tx_direct(store->backend, tx_slot_id);
@@ -410,8 +410,8 @@ tx_slot_op_update(struct _pmb_handle *store, uint64_t tx_slot_id,
     }
 
     entry->type = UPDATE;
-    entry->obj_id1 = old_obj_id;
-    entry->obj_id2 = new_obj_id;
+    entry->blk_id1 = old_blk_id;
+    entry->blk_id2 = new_blk_id;
     slot->size += sizeof(tx_entry);
 
     return PMB_OK;
@@ -419,7 +419,7 @@ tx_slot_op_update(struct _pmb_handle *store, uint64_t tx_slot_id,
 
 uint8_t
 tx_slot_op_remove(struct _pmb_handle *store, uint64_t tx_slot_id,
-        uint64_t obj_id)
+        uint64_t blk_id)
 {
     tx_slot_id--;
     void *slot_ptr = backend_tx_direct(store->backend, tx_slot_id);
@@ -435,7 +435,7 @@ tx_slot_op_remove(struct _pmb_handle *store, uint64_t tx_slot_id,
     }
 
     entry->type = REMOVE;
-    entry->obj_id1 = obj_id;
+    entry->blk_id1 = blk_id;
     slot->size += sizeof(tx_entry);
 
     return PMB_OK;
@@ -468,38 +468,38 @@ void tx_log_check(struct _pmb_handle *store)
         for(void *position_ptr = entries; position_ptr < slot_ptr + slot->size;
                 position_ptr += sizeof(tx_entry)) {
             tx_entry *entry = (tx_entry *) position_ptr;
-            if (!entry->obj_id1 && !entry->obj_id2) {
+            if (!entry->blk_id1 && !entry->blk_id2) {
                 break;
             }
 
             switch (entry->type) {
                 case WRITE:
                     if (!commit) {
-                        obj = backend_direct(store->backend, entry->obj_id1);
+                        obj = backend_direct(store->backend, entry->blk_id1);
                         backend_set_zero(store->backend, obj);
                     }
                     break;
                 case REMOVE:
                     if (commit) {
-                        obj = backend_direct(store->backend, entry->obj_id1);
+                        obj = backend_direct(store->backend, entry->blk_id1);
                         backend_set_zero(store->backend, obj);
                     }
                     break;
                 case UPDATE:
                     if (commit) {
-                        obj = backend_direct(store->backend, entry->obj_id1);
+                        obj = backend_direct(store->backend, entry->blk_id1);
                         backend_set_zero(store->backend, obj);
                     } else {
-                        obj = backend_direct(store->backend, entry->obj_id2);
+                        obj = backend_direct(store->backend, entry->blk_id2);
                         backend_set_zero(store->backend, obj);
                     }
                     break;
                 case UPDINPLACE:
                     if (commit){
-                        size = entry->obj_id2 >> 32;
-                        offset = entry->obj_id2 & 0xffffffff;
+                        size = entry->blk_id2 >> 32;
+                        offset = entry->blk_id2 & 0xffffffff;
                         obj = (void *) entries + sizeof(tx_entry);
-                        tx_update_block(store, tx_slot_id, entry->obj_id1, obj,
+                        tx_update_block(store, tx_slot_id, entry->blk_id1, obj,
                                 offset, size);
                     }
                 default:
@@ -517,17 +517,17 @@ void tx_log_check(struct _pmb_handle *store)
 static void
 tx_slot_meta_upd_process(struct _pmb_handle *store, uint8_t tx_id)
 {
-	tracepoint(tx_log, tx_slot_meta_upd_process_enter);
+    tracepoint(tx_log, tx_slot_meta_upd_process_enter);
     tx_metalist *metalist = &(store->op_log.upd_id_list[tx_id]);
     tx_meta *meta;
     for (size_t i = 0; i < metalist->count; i++) {
         meta = &(metalist->list[i]);
-        pmb_obj_meta *obj_meta = backend_direct(store->backend, meta->id);
+        pmb_data_hdr *obj_meta = backend_direct(store->backend, meta->id);
         obj_meta->version = meta->version;
         obj_meta->val_len = meta->val_len;
 
         util_checksum(obj_meta,
-                sizeof(pmb_obj_meta) + store->max_key_len + obj_meta->val_len,
+                sizeof(pmb_data_hdr) + store->max_key_len + obj_meta->val_len,
                 &obj_meta->flch64, 1);
     }
 

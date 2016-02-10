@@ -46,33 +46,27 @@
 
 typedef struct {
     uint64_t flch64;
-    uint32_t max_key_len;
-    uint64_t max_val_len;
-    uint8_t  tx_slots_count;
-} pmb_super_block;
-
-typedef struct {
-	uint64_t flch64;
+    uint64_t id;
     uint32_t version;
     uint32_t key_len;
     uint32_t val_len;
-} pmb_obj_meta;
+} pmb_data_hdr;
 
 typedef struct {
-    uint64_t* obj_ids;
+    uint64_t* blk_ids;
     size_t*   sizes;
     size_t    count;
 } tx_flush;
 
-typedef struct _tx_meta tx_meta;
+//typedef struct _tx_meta tx_meta;
 
-struct _tx_meta {
+typedef struct _tx_meta {
 	struct _tx_meta* next;
 	uint64_t id;
 	uint32_t version;
 	uint32_t val_len;
 	uint32_t offset;
-};
+} tx_meta;
 
 typedef struct {
 	size_t count;
@@ -106,11 +100,10 @@ struct _pmb_handle {
     uint32_t     max_val_len;      // from superblock
     uint32_t     meta_max_key_len; // from superblock
     uint32_t     meta_max_val_len;
-    uint64_t     border;
     caslist*     objs_list;        // list with objects found at initial scan
     caslist*     free_list;        // list with available blocks to write
     caslist*     meta_objs_list;   // list with objects found at initial scan
-	caslist*     meta_free_list;
+    caslist*     meta_free_list;
     tx_log       op_log;           // for secure in-place data writes/updates
     pthread_t    sync_thread;      // thread for syncs
 };
@@ -158,15 +151,15 @@ typedef enum {
 
 /*
  * Single operation,
- * obj_id2 :
+ * blk_id2 :
  * - is not used by WRITE and DELETE operations,
  * - is used by UPDATE as new object id,
  * - is used by UPDINPLACE as size of following databuffer
  */
 typedef struct {
     tx_op    type;
-    uint64_t obj_id1;
-    uint64_t obj_id2;
+    uint64_t blk_id1;
+    uint64_t blk_id2;
 } tx_entry;
 
 /*
@@ -196,13 +189,13 @@ uint8_t tx_slot_execute(struct _pmb_handle *handle, uint64_t tx_slot);
 
 uint8_t tx_slot_abort(struct _pmb_handle *handle, uint64_t tx_slot);
 
-uint8_t tx_slot_op_write(struct _pmb_handle *handle, uint64_t tx_slot, uint64_t obj_id, uint32_t size);
+uint8_t tx_slot_op_write(struct _pmb_handle *handle, uint64_t tx_slot, uint64_t blk_id, uint32_t size);
 
-uint8_t tx_slot_op_update(struct _pmb_handle *handle, uint64_t tx_slot, uint64_t old_obj_id, uint64_t new_obj_id, uint32_t size);
+uint8_t tx_slot_op_update(struct _pmb_handle *handle, uint64_t tx_slot, uint64_t old_blk_id, uint64_t new_blk_id, uint32_t size);
 
-uint8_t tx_slot_op_small_update(struct _pmb_handle *handle, uint64_t tx_slot, uint64_t obj_id, void *data, uint32_t offset, uint32_t size);
+uint8_t tx_slot_op_small_update(struct _pmb_handle *handle, uint64_t tx_slot, uint64_t blk_id, void *data, uint32_t offset, uint32_t size);
 
-uint8_t tx_slot_op_remove(struct _pmb_handle *handle, uint64_t tx_slot, uint64_t obj_id);
+uint8_t tx_slot_op_remove(struct _pmb_handle *handle, uint64_t tx_slot, uint64_t blk_id);
 
 uint32_t get_block_size(uint32_t key_len, uint32_t val_len);
 

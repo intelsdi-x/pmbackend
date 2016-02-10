@@ -55,7 +55,7 @@ TEST(IterPos, Succes) {
 
 	uint64_t position =	pmb_iter_pos(iter); // get position
 	EXPECT_GT(position, 0); // position cant point on superblock or tx_log
-	EXPECT_EQ(position, to_put.obj_id);  // position is equal obj_id cause there is only one item in handle
+	EXPECT_EQ(position, to_put.blk_id);  // position is equal blk_id cause there is only one item in handle
 
 	EXPECT_EQ(PMB_OK, pmb_iter_close(iter));
 

@@ -78,7 +78,7 @@ TEST(TPut, SuccessfullyTouchObject) {
 	EXPECT_EQ(PMB_OK, pmb_tput(handle, tx_slot, &to_put));
 	EXPECT_EQ(PMB_OK, pmb_tx_commit(handle, tx_slot));
 	EXPECT_EQ(PMB_OK, pmb_tx_execute(handle, tx_slot));
-	validate_save(handle, to_put.obj_id, to_put);
+	validate_save(handle, to_put.blk_id, to_put);
 	EXPECT_EQ(1, count(handle, PMB_DATA));
 
 	remove_handle(handle);
@@ -89,7 +89,7 @@ TEST(TPut, ReturnErrorCauseTouchHasOffset) {
 	pmb_pair to_put  = generate_put_input(0, 0, (void *)"5", (void *)"6", MAX_KEY_LEN, 0);
 	uint64_t tx_slot;
 	EXPECT_EQ(PMB_OK, pmb_tx_begin(handle, &tx_slot));
-	to_put.obj_id = 0;
+	to_put.blk_id = 0;
 	to_put.offset = 10;
 	to_put.key = (void *)"5";
 	to_put.val = NULL;
@@ -152,7 +152,7 @@ TEST(TPut, SuccessfullyWriteNewData) {
 	EXPECT_EQ(PMB_OK, pmb_tx_commit(handle, tx_slot));
 	EXPECT_EQ(PMB_OK, pmb_tx_execute(handle, tx_slot));
 
-	validate_save(handle, to_put.obj_id, to_put);
+	validate_save(handle, to_put.blk_id, to_put);
 	EXPECT_EQ(1, count(handle, PMB_DATA));
 
 	remove_handle(handle);
@@ -161,7 +161,7 @@ TEST(TPut, SuccessfullyWriteNewData) {
 TEST(TPut, ReturnErrorCauseObjectToUpdateDoesntHavePreviousVersion) {
 	pmb_handle *handle = create_handle();
 	pmb_pair to_put = generate_put_input();
-	to_put.obj_id = 1030;
+	to_put.blk_id = 1030;
 	uint64_t tx_slot;
 
 	EXPECT_EQ(PMB_OK, pmb_tx_begin(handle, &tx_slot));
@@ -174,7 +174,7 @@ TEST(TPut, ReturnErrorCauseObjectToUpdateDoesntHavePreviousVersion) {
 TEST(DISABLED_TPut, ReturnErrorCauseObjectToUpdateIsMetaObject) {
 	pmb_handle *handle = create_handle();
 	pmb_pair to_put = generate_put_input();
-	to_put.obj_id = 21030;
+	to_put.blk_id = 21030;
 	uint64_t tx_slot;
 
 	EXPECT_EQ(PMB_OK, pmb_tx_begin(handle, &tx_slot));
@@ -195,10 +195,10 @@ TEST(TPut, SuccessfullyUpdateObjectWithObjectOfTheSameSize) {
 	EXPECT_EQ(PMB_OK, pmb_tput(handle,  tx_slot, &to_put));
 	EXPECT_EQ(PMB_OK, pmb_tx_commit(handle, tx_slot));
 	EXPECT_EQ(PMB_OK, pmb_tx_execute(handle, tx_slot));
-	validate_save(handle, to_put.obj_id, to_put);
+	validate_save(handle, to_put.blk_id, to_put);
 	EXPECT_EQ(1, count(handle, PMB_DATA));
-	EXPECT_GT(to_put.obj_id, 0);
-	uint64_t obj_id = to_put.obj_id;
+	EXPECT_GT(to_put.blk_id, 0);
+	uint64_t blk_id = to_put.blk_id;
 
 	to_put.val = (void *)"1234321";
 	EXPECT_EQ(PMB_OK, pmb_tx_begin(handle, &tx_slot));
@@ -207,9 +207,9 @@ TEST(TPut, SuccessfullyUpdateObjectWithObjectOfTheSameSize) {
 	EXPECT_EQ(PMB_OK, pmb_tx_commit(handle, tx_slot));
 	EXPECT_EQ(PMB_OK, pmb_tx_execute(handle, tx_slot));
 
-	validate_save(handle, to_put.obj_id, to_put);
-    EXPECT_NE(to_put.obj_id, obj_id);
-	EXPECT_EQ(PMB_ENOENT, pmb_get(handle, obj_id, &readed));
+	validate_save(handle, to_put.blk_id, to_put);
+    EXPECT_NE(to_put.blk_id, blk_id);
+	EXPECT_EQ(PMB_ENOENT, pmb_get(handle, blk_id, &readed));
 	EXPECT_EQ(1, count(handle, PMB_DATA));
 
 	remove_handle(handle);
@@ -235,7 +235,7 @@ TEST(TPut, SuccessfullyUpdateObjectInPlace) {
 	EXPECT_EQ(PMB_OK, pmb_tx_commit(handle, tx_slot));
 	EXPECT_EQ(PMB_OK, pmb_tx_execute(handle, tx_slot));
 	EXPECT_EQ(1, count(handle, PMB_DATA));
-	uint64_t obj_id = to_put.obj_id;
+	uint64_t blk_id = to_put.blk_id;
 
 	EXPECT_EQ(PMB_OK, pmb_tx_begin(handle, &tx_slot));
 	to_put.offset = 1 * MAX_VAL_LEN/8;
@@ -251,11 +251,11 @@ TEST(TPut, SuccessfullyUpdateObjectInPlace) {
 
 	EXPECT_EQ(PMB_OK, pmb_tx_commit(handle, tx_slot));
 	EXPECT_EQ(PMB_OK, pmb_tx_execute(handle, tx_slot));
-	EXPECT_EQ(obj_id, to_put.obj_id);
+	EXPECT_EQ(blk_id, to_put.blk_id);
 	EXPECT_EQ(1, count(handle, PMB_DATA));
-	EXPECT_EQ(obj_id, to_put.obj_id);
+	EXPECT_EQ(blk_id, to_put.blk_id);
 
-	EXPECT_EQ(PMB_OK, pmb_get(handle, to_put.obj_id, &readed));
+	EXPECT_EQ(PMB_OK, pmb_get(handle, to_put.blk_id, &readed));
 	EXPECT_EQ(0, memcmp(readed.val, val1,  MAX_VAL_LEN/8));
 	EXPECT_EQ(0, memcmp(readed.val + 1 * MAX_VAL_LEN/8, val2, MAX_VAL_LEN/8));
 	EXPECT_EQ(0, memcmp(readed.val + 2 * MAX_VAL_LEN/8, val3, MAX_VAL_LEN/8));
@@ -275,10 +275,10 @@ TEST(TPut, SuccessfullyUpdateObjectWithOffsetAligned) {
 	EXPECT_EQ(PMB_OK, pmb_tput(handle,  tx_slot, &to_put));
 	EXPECT_EQ(PMB_OK, pmb_tx_commit(handle, tx_slot));
 	EXPECT_EQ(PMB_OK, pmb_tx_execute(handle, tx_slot));
-	validate_save(handle, to_put.obj_id, to_put);
+	validate_save(handle, to_put.blk_id, to_put);
 	EXPECT_EQ(1, count(handle, PMB_DATA));
-	EXPECT_GT(to_put.obj_id, 0);
-	uint64_t obj_id = to_put.obj_id;
+	EXPECT_GT(to_put.blk_id, 0);
+	uint64_t blk_id = to_put.blk_id;
 
 	to_put.offset = 512;
 	to_put.val_len = 512;
@@ -290,15 +290,15 @@ TEST(TPut, SuccessfullyUpdateObjectWithOffsetAligned) {
 	EXPECT_EQ(PMB_OK, pmb_tx_commit(handle, tx_slot));
 	EXPECT_EQ(PMB_OK, pmb_tx_execute(handle, tx_slot));
 
-	EXPECT_NE(to_put.obj_id, obj_id);
+	EXPECT_NE(to_put.blk_id, blk_id);
 	EXPECT_EQ(1, count(handle, PMB_DATA));
 
-	EXPECT_EQ(PMB_OK, pmb_get(handle, to_put.obj_id, &readed));
+	EXPECT_EQ(PMB_OK, pmb_get(handle, to_put.blk_id, &readed));
 	EXPECT_STREQ((char *)readed.key, (char *)to_put.key);
 	EXPECT_EQ(readed.key_len, to_put.key_len);
 	EXPECT_EQ(readed.val_len, MAX_VAL_LEN);
 	EXPECT_EQ(readed.offset, 0);
-	EXPECT_EQ(readed.obj_id, to_put.obj_id);
+	EXPECT_EQ(readed.blk_id, to_put.blk_id);
 
 	EXPECT_EQ(0, memcmp(readed.val, (void *)"632",  3));
 	EXPECT_EQ(0, memcmp(readed.val + 512, (void *)"1234321", 7));
@@ -321,10 +321,10 @@ TEST(TPut, SuccessfullyUpdateObjectWithOffsetNotAligned) {
     EXPECT_EQ(PMB_OK, pmb_tput(handle,  tx_slot, &to_put));
     EXPECT_EQ(PMB_OK, pmb_tx_commit(handle, tx_slot));
     EXPECT_EQ(PMB_OK, pmb_tx_execute(handle, tx_slot));
-	validate_save(handle, to_put.obj_id, to_put);
+	validate_save(handle, to_put.blk_id, to_put);
 	EXPECT_EQ(1, count(handle, PMB_DATA));
-	EXPECT_GT(to_put.obj_id, 0);
-	uint64_t obj_id = to_put.obj_id;
+	EXPECT_GT(to_put.blk_id, 0);
+	uint64_t blk_id = to_put.blk_id;
 
 	to_put.offset = 256;
 	to_put.val_len = 768;
@@ -336,15 +336,15 @@ TEST(TPut, SuccessfullyUpdateObjectWithOffsetNotAligned) {
 	EXPECT_EQ(PMB_OK, pmb_tx_commit(handle, tx_slot));
 	EXPECT_EQ(PMB_OK, pmb_tx_execute(handle, tx_slot));
 
-	EXPECT_NE(to_put.obj_id, obj_id);
+	EXPECT_NE(to_put.blk_id, blk_id);
 	EXPECT_EQ(1, count(handle, PMB_DATA));
 
-	EXPECT_EQ(PMB_OK, pmb_get(handle, to_put.obj_id, &readed));
+	EXPECT_EQ(PMB_OK, pmb_get(handle, to_put.blk_id, &readed));
 	EXPECT_STREQ((char *)readed.key, (char *)to_put.key);
 	EXPECT_EQ(readed.key_len, to_put.key_len);
 	EXPECT_EQ(readed.val_len, MAX_VAL_LEN);
 	EXPECT_EQ(readed.offset, 0);
-	EXPECT_EQ(readed.obj_id, to_put.obj_id);
+	EXPECT_EQ(readed.blk_id, to_put.blk_id);
 
 	EXPECT_EQ(0, memcmp(readed.val, val1,  256));
 	EXPECT_EQ(0, memcmp(readed.val + 256, val2, 768));
@@ -367,10 +367,10 @@ TEST(TPut, SuccessfullyUpdateObjectWithObjectOfTheSmallerSize) {
 	EXPECT_EQ(PMB_OK, pmb_tput(handle, tx_slot, &to_put));
 	EXPECT_EQ(PMB_OK, pmb_tx_commit(handle, tx_slot));
 	EXPECT_EQ(PMB_OK, pmb_tx_execute(handle, tx_slot));
-	validate_save(handle, to_put.obj_id, to_put);
+	validate_save(handle, to_put.blk_id, to_put);
 	EXPECT_EQ(1, count(handle, PMB_DATA));
-	EXPECT_GT(to_put.obj_id, 0);
-	uint64_t obj_id = to_put.obj_id;
+	EXPECT_GT(to_put.blk_id, 0);
+	uint64_t blk_id = to_put.blk_id;
 
 	to_put.val_len = MAX_VAL_LEN - 256;
 	to_put.val = val2;
@@ -380,16 +380,16 @@ TEST(TPut, SuccessfullyUpdateObjectWithObjectOfTheSmallerSize) {
 	EXPECT_EQ(PMB_OK, pmb_tx_commit(handle, tx_slot));
 	EXPECT_EQ(PMB_OK, pmb_tx_execute(handle, tx_slot));
 
-	EXPECT_NE(to_put.obj_id, obj_id);
-	EXPECT_EQ(PMB_ENOENT, pmb_get(handle, obj_id, &readed));
-	EXPECT_EQ(PMB_OK, pmb_get(handle, to_put.obj_id, &readed));
+	EXPECT_NE(to_put.blk_id, blk_id);
+	EXPECT_EQ(PMB_ENOENT, pmb_get(handle, blk_id, &readed));
+	EXPECT_EQ(PMB_OK, pmb_get(handle, to_put.blk_id, &readed));
 	EXPECT_EQ(1, count(handle, PMB_DATA));
 
 	EXPECT_STREQ((char *)readed.key, (char *)to_put.key);
 	EXPECT_EQ(readed.key_len, to_put.key_len);
 	EXPECT_EQ(readed.val_len, MAX_VAL_LEN);
 	EXPECT_EQ(readed.offset, 0);
-	EXPECT_EQ(readed.obj_id, to_put.obj_id);
+	EXPECT_EQ(readed.blk_id, to_put.blk_id);
 
 	EXPECT_EQ(0, memcmp(readed.val, val2,  768));
 	EXPECT_EQ(0, memcmp(readed.val + 768, val1, 256));
@@ -408,10 +408,10 @@ TEST(TPut, SuccessfullyUpdateObjectWithObjectOfTheBiggerSize) {
 	EXPECT_EQ(PMB_OK, pmb_tx_commit(handle, tx_slot));
 	EXPECT_EQ(PMB_OK, pmb_tx_execute(handle, tx_slot));
 
-	validate_save(handle, to_put.obj_id, to_put);
+	validate_save(handle, to_put.blk_id, to_put);
 	EXPECT_EQ(1, count(handle, PMB_DATA));
-	EXPECT_GT(to_put.obj_id, 0);
-	uint64_t obj_id = to_put.obj_id;
+	EXPECT_GT(to_put.blk_id, 0);
+	uint64_t blk_id = to_put.blk_id;
 
 	to_put.val_len = MAX_VAL_LEN;
 	to_put.val = (void *)"1234321";
@@ -422,9 +422,9 @@ TEST(TPut, SuccessfullyUpdateObjectWithObjectOfTheBiggerSize) {
 	EXPECT_EQ(PMB_OK, pmb_tx_commit(handle, tx_slot));
 	EXPECT_EQ(PMB_OK, pmb_tx_execute(handle, tx_slot));
 
-	validate_save(handle, to_put.obj_id, to_put);
-	EXPECT_NE(to_put.obj_id, obj_id);
-	EXPECT_EQ(PMB_ENOENT, pmb_get(handle, obj_id, &readed));
+	validate_save(handle, to_put.blk_id, to_put);
+	EXPECT_NE(to_put.blk_id, blk_id);
+	EXPECT_EQ(PMB_ENOENT, pmb_get(handle, blk_id, &readed));
 	EXPECT_EQ(1, count(handle, PMB_DATA));
 
 	remove_handle(handle);

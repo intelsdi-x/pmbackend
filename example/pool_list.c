@@ -63,10 +63,10 @@ int main(int argc, const char *argv[]) {
     pmb_iter *iter = pmb_iter_open(handle, 0);
     while(pmb_iter_valid(iter)) {
         pmb_iter_get(iter, &p);
-        if (p.obj_id != 0)
-            printf("saved object: id %zu key %s key_len %d\n", p.obj_id, (char *)p.key, p.key_len);
+        if (p.blk_id != 0)
+            printf("saved object: id %zu key %s key_len %d\n", p.blk_id, (char *)p.key, p.key_len);
         pmb_iter_next(iter);
-        p.obj_id = 0;
+        p.blk_id = 0;
     }
     pmb_iter_close(iter);
     pmb_close(handle);

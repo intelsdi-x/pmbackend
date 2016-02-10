@@ -184,7 +184,7 @@ TEST(DISABLED_OpenHandle, SuccessOpenNotEmptyObjAndMeta) {
 	uint64_t tx_slot;
 	EXPECT_EQ(PMB_OK, pmb_tx_begin(handle, &tx_slot));
 	EXPECT_EQ(PMB_OK, pmb_tput(handle,  tx_slot, &to_put));
-	to_put.obj_id = 0;
+	to_put.blk_id = 0;
 	EXPECT_EQ(PMB_OK, pmb_tput(handle, tx_slot, &to_put));
 	EXPECT_EQ(PMB_OK, pmb_tx_commit(handle, tx_slot));
 	EXPECT_EQ(PMB_OK, pmb_tx_execute(handle, tx_slot));

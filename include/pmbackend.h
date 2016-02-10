@@ -41,17 +41,18 @@ extern "C" {
 #include <sys/types.h>
 #include <pthread.h>
 
-#define PMB_OK        0
-#define PMB_ERR       1 // generic error
-#define PMB_ENOENT    2 // requested object don't exists
-#define PMB_ENOSPC    3 // no space left on device
-#define PMB_ECREAT    4 // cannot create handle
-#define PMB_ESBWR     5 // cannot write superblock
-#define PMB_ESBCR     6 // superblock corrupted
-#define PMB_ESBIN     7 // superblock invalid
-#define PMB_ESIZE     8 // key or value exceeded max
-#define PMB_EWRGID    9 // ID of data data block to update with meta function or
-                        // ID of meta block to update with data function
+#define PMB_OK        0  // OK
+#define PMB_ERR       1  // generic error
+#define PMB_ENOENT    2  // requested object don't exists
+#define PMB_ENOSPC    3  // no space left on device
+#define PMB_ECREAT    4  // cannot create handle
+#define PMB_ESBWR     5  // cannot write superblock
+#define PMB_ESBCR     6  // superblock corrupted
+#define PMB_ESBIN     7  // superblock invalid
+#define PMB_ESIZE     8  // key or value exceeded max
+#define PMB_EWRGID    9  // ID of data data block to update with meta function or
+                         // ID of meta block to update with data function
+#define PMB_EARGS     10 // Invalid arguement passed
 
 #define PMB_DATA 0
 #define PMB_META 1
@@ -78,7 +79,8 @@ typedef struct _pmb_handle pmb_handle;
  * library and client.
  */
 typedef struct {
-    uint64_t obj_id;
+    uint64_t blk_id;
+    uint64_t id;
     uint32_t offset; // for update - start of an update region
     void*    key;
     uint32_t key_len;
@@ -99,8 +101,8 @@ typedef struct {
     uint32_t    max_key_len;
     uint32_t    max_val_len;
     uint32_t    meta_max_key_len;
-	uint32_t    meta_max_val_len;
-	uint8_t     sync_type;
+    uint32_t    meta_max_val_len;
+    uint8_t     sync_type;
 } pmb_opts;
 
 /*
@@ -166,7 +168,7 @@ uint8_t pmb_tx_abort(pmb_handle* handle, uint64_t tx_slot);
  * - PMB_OK on success, also sets val and val_len fields in pmb_pair structure
  * - PMB_ENOENT if there's no such key-value pair in handle
  */
-uint8_t pmb_get(pmb_handle* handle, uint64_t obj_id, pmb_pair* pair);
+uint8_t pmb_get(pmb_handle* handle, uint64_t blk_id, pmb_pair* pair);
 
 /*
  * Functions writing data to the store:
@@ -179,7 +181,7 @@ uint8_t pmb_get(pmb_handle* handle, uint64_t obj_id, pmb_pair* pair);
  * key
  * key_len
  *
- * If obj_id is set to non-zero value in pmb_pair and pmb_tput* verion is used then write will
+ * If blk_id is set to non-zero value in pmb_pair and pmb_tput* verion is used then write will
  * be performed transactionally.
  *
  * val_len is allowed to be 0 only when val is set to NULL
@@ -197,10 +199,10 @@ uint8_t pmb_tput_meta(pmb_handle* handle, uint64_t tx_slot, pmb_pair* pair);
 /*
  * Removes object from pmb_handle, at success returns PMB_OK, otherwise error code.
  *
- * When there's no object for given obj_id then function returns PMB_OK, there's no side
+ * When there's no object for given blk_id then function returns PMB_OK, there's no side
  * effects.
  */
-uint8_t pmb_tdel(pmb_handle* handle, uint64_t tx_slot, uint64_t obj_id);
+uint8_t pmb_tdel(pmb_handle* handle, uint64_t tx_slot, uint64_t blk_id);
 
 /*
  * Prints information about how many items can be handled in each bucket.
@@ -215,9 +217,9 @@ uint64_t pmb_ntotal(pmb_handle* handle, uint8_t region);
 /*
  * For debug purposes only, prints to stdout object,s data and metadata.
  */
-void pmb_inspect(pmb_handle* handle, uint64_t obj_id);
+void pmb_inspect(pmb_handle* handle, uint64_t blk_id);
 
-uint64_t pmb_resolve_conflict(pmb_handle* handle, uint64_t obj_id1, uint64_t obj_id2);
+uint64_t pmb_resolve_conflict(pmb_handle* handle, uint64_t blk_id1, uint64_t blk_id2);
 
 /*
  * Return error message associated with given error code.
